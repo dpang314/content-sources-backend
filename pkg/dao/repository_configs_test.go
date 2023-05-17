@@ -1041,6 +1041,17 @@ func (suite *RepositoryConfigSuite) TestListURLs() {
 	if len(response) > 0 {
 		assert.Equal(t, repoConfig.Repository.URL, response[0])
 	}
+
+	var otherOrgTotal int64
+	otherOrgID := orgID + "a"
+	otherOrgResponse, otherOrgErr := GetRepositoryConfigDao(suite.tx).ListURLs(otherOrgID)
+	otherOrgRepoConfigs := make([]models.RepositoryConfiguration, 0)
+	otherOrgResult := suite.tx.Where("org_id = ?", otherOrgID).Find(&otherOrgRepoConfigs).Count(&otherOrgTotal)
+
+	assert.Nil(t, otherOrgResult.Error)
+	assert.Nil(t, otherOrgErr)
+	assert.Empty(t, otherOrgResponse)
+	assert.Equal(t, int64(0), otherOrgTotal)
 }
 
 func (suite *RepositoryConfigSuite) TestListURLsNoRepositories() {

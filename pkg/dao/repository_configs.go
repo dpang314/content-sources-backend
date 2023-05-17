@@ -156,7 +156,8 @@ func (r repositoryConfigDaoImpl) bulkCreate(tx *gorm.DB, newRepositories []api.R
 
 func (r repositoryConfigDaoImpl) ListURLs(OrgId string) ([]string, error) {
 	var urls []string
-	result := r.db.Model(models.RepositoryConfiguration{}).Where("org_id = ?", OrgId).Joins("inner join repositories on repository_configurations.repository_uuid = repositories.uuid").Select("URL").Find(&urls)
+	result := r.db.Model(models.RepositoryConfiguration{}).Where("org_id = ?", OrgId).
+		Joins("inner join repositories on repository_configurations.repository_uuid = repositories.uuid").Select("URL").Find(&urls)
 	if result.Error != nil {
 		return urls, result.Error
 	}
