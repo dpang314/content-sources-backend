@@ -124,7 +124,7 @@ func (rh *RepositoryHandler) listRepositories(c echo.Context) error {
 // @Tags         repositories
 // @Accept       json
 // @Produce      json
-// @Success      200 {[]string} Repository URLs
+// @Success      200 {object} []string
 // @Failure      400 {object} ce.ErrorResponse
 // @Failure      401 {object} ce.ErrorResponse
 // @Failure      404 {object} ce.ErrorResponse
