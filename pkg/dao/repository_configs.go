@@ -154,6 +154,15 @@ func (r repositoryConfigDaoImpl) bulkCreate(tx *gorm.DB, newRepositories []api.R
 	}
 }
 
+func (r repositoryConfigDaoImpl) ListURLs(OrgId string) ([]string, error) {
+	var urls []string
+	result := r.db.Model(models.RepositoryConfiguration{}).Where("org_id = ?", OrgId).Joins("inner join repositories on repository_configurations.repository_uuid = repositories.uuid").Select("URL").Find(&urls)
+	if result.Error != nil {
+		return urls, result.Error
+	}
+	return urls, nil
+}
+
 func (r repositoryConfigDaoImpl) List(
 	OrgID string,
 	pageData api.PaginationData,
@@ -349,7 +358,6 @@ func ModelToApiFields(repoConfig models.RepositoryConfiguration, apiRepo *api.Re
 	apiRepo.GpgKey = repoConfig.GpgKey
 	apiRepo.MetadataVerification = repoConfig.MetadataVerification
 	apiRepo.FailedIntrospectionsCount = repoConfig.Repository.FailedIntrospectionsCount
-	apiRepo.RepositoryUUID = repoConfig.RepositoryUUID
 
 	if repoConfig.Repository.LastIntrospectionTime != nil {
 		apiRepo.LastIntrospectionTime = repoConfig.Repository.LastIntrospectionTime.Format(time.RFC3339)

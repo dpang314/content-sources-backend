@@ -34,6 +34,7 @@ type RepositoryConfigDao interface {
 	Update(orgID string, uuid string, repoParams api.RepositoryRequest) error
 	Fetch(orgID string, uuid string) (api.RepositoryResponse, error)
 	List(orgID string, paginationData api.PaginationData, filterData api.FilterData) (api.RepositoryCollectionResponse, int64, error)
+	ListURLs(OrgID string) ([]string, error)
 	Delete(orgID string, uuid string) error
 	SavePublicRepos(urls []string) error
 	ValidateParameters(orgId string, params api.RepositoryValidationRequest, excludedUUIDS []string) (api.RepositoryValidationResponse, error)
