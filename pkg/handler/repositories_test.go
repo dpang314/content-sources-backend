@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -294,10 +295,6 @@ func (suite *ReposSuite) TestListURLsSimple() {
 
 	suite.reg.RepositoryConfig.On("ListURLs", test_handler.MockOrgId).Return(urls, nil)
 
-	// Makes sure that users with a different organization ID don't the urls
-	otherOrgId := test_handler.MockOrgId + "a"
-	suite.reg.RepositoryConfig.On("ListURLs", otherOrgId).Return([]string{}, nil)
-
 	req := httptest.NewRequest(http.MethodGet, fullRootPath()+"/repositories/urls/", nil)
 	req.Header.Set(api.IdentityHeader, test_handler.EncodedIdentity(t))
 
@@ -310,6 +307,37 @@ func (suite *ReposSuite) TestListURLsSimple() {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(response))
 	assert.Equal(t, urls[0], response[0])
+
+	// Makes sure that users with a different organization ID don't see the urls
+	otherOrgId := test_handler.MockOrgId + "a"
+	otherAccountNumber := test_handler.MockAccountNumber + "1"
+	suite.reg.RepositoryConfig.On("ListURLs", otherOrgId).Return([]string{}, nil)
+
+	otherOrgMockIdentity := identity.XRHID{
+		Identity: identity.Identity{
+			AccountNumber: otherAccountNumber,
+			Internal: identity.Internal{
+				OrgID: otherOrgId,
+			},
+			Type: "Associate",
+		},
+	}
+	otherOrgJsonIdentity, err := json.Marshal(otherOrgMockIdentity)
+	if err != nil {
+		t.Error("Could not marshal JSON")
+	}
+
+	otherOrgReq := httptest.NewRequest(http.MethodGet, fullRootPath()+"/repositories/urls/", nil)
+	otherOrgReq.Header.Set(api.IdentityHeader, base64.StdEncoding.EncodeToString(otherOrgJsonIdentity))
+
+	otherOrgCode, otherOrgBody, otherOrgErr := suite.serveRepositoriesRouter(otherOrgReq)
+	assert.Nil(t, otherOrgErr)
+	assert.Equal(t, http.StatusOK, otherOrgCode)
+
+	var otherOrgResponse []string
+	err = json.Unmarshal(otherOrgBody, &otherOrgResponse)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(otherOrgResponse))
 }
 
 func (suite *ReposSuite) TestListURLsNoRepositories() {
