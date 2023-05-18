@@ -283,6 +283,49 @@ func (suite *ReposSuite) TestListDaoError() {
 	assert.Equal(t, http.StatusInternalServerError, code)
 }
 
+func (suite *ReposSuite) TestListURLsSimple() {
+	t := suite.T()
+
+	collection := createRepoCollection(1, 10, 0)
+	urls := make([]string, len(collection.Data))
+	for i := range collection.Data {
+		urls[i] = collection.Data[i].URL
+	}
+
+	suite.reg.RepositoryConfig.On("ListURLs", test_handler.MockOrgId).Return(urls, nil)
+
+	req := httptest.NewRequest(http.MethodGet, fullRootPath()+"/repositories/urls/", nil)
+	req.Header.Set(api.IdentityHeader, test_handler.EncodedIdentity(t))
+
+	code, body, err := suite.serveRepositoriesRouter(req)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, code)
+
+	var response []string
+	err = json.Unmarshal(body, &response)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(response))
+	assert.Equal(t, urls[0], response[0])
+}
+
+func (suite *ReposSuite) TestListURLsNoRepositories() {
+	t := suite.T()
+
+	suite.reg.RepositoryConfig.On("ListURLs", test_handler.MockOrgId).Return([]string{}, nil)
+
+	req := httptest.NewRequest(http.MethodGet, fullRootPath()+"/repositories/urls/", nil)
+	req.Header.Set(api.IdentityHeader, test_handler.EncodedIdentity(t))
+
+	code, body, err := suite.serveRepositoriesRouter(req)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, code)
+
+	var response []string
+	err = json.Unmarshal(body, &response)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(response))
+}
+
 func (suite *ReposSuite) TestFetch() {
 	t := suite.T()
 

@@ -48,6 +48,7 @@ func RegisterRepositoryRoutes(engine *echo.Group, daoReg *dao.DaoRegistry, prod 
 		TaskClient:                *taskClient,
 	}
 	engine.GET("/repositories/", rh.listRepositories)
+	engine.GET("/repositories/urls/", rh.listRepositoryURLs)
 	engine.GET("/repositories/:uuid", rh.fetch)
 	engine.PUT("/repositories/:uuid", rh.fullUpdate)
 	engine.PATCH("/repositories/:uuid", rh.partialUpdate)
@@ -114,6 +115,29 @@ func (rh *RepositoryHandler) listRepositories(c echo.Context) error {
 	}
 
 	return c.JSON(200, setCollectionResponseMetadata(&repos, c, totalRepos))
+}
+
+// ListRepositoryURLs godoc
+// @Summary      List Repository URLs
+// @ID           listRepositoryURLs
+// @Description  list repository URLs
+// @Tags         repositories
+// @Accept       json
+// @Produce      json
+// @Success      200 {object} []string
+// @Failure      400 {object} ce.ErrorResponse
+// @Failure      401 {object} ce.ErrorResponse
+// @Failure      404 {object} ce.ErrorResponse
+// @Failure      500 {object} ce.ErrorResponse
+// @Router       /repositories/urls/ [get]
+func (rh *RepositoryHandler) listRepositoryURLs(c echo.Context) error {
+	_, orgId := getAccountIdOrgId(c)
+	urls, err := rh.DaoRegistry.RepositoryConfig.ListURLs(orgId)
+	if err != nil {
+		return ce.NewErrorResponse(ce.HttpCodeForDaoError(err), "Error listing repository URLs", err.Error())
+	}
+
+	return c.JSON(http.StatusOK, urls)
 }
 
 // CreateRepository godoc

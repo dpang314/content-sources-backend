@@ -1016,6 +1016,60 @@ func (suite *RepositoryConfigSuite) TestSavePublicUrls() {
 	assert.Equal(t, int64(len(repo)), count)
 }
 
+func (suite *RepositoryConfigSuite) TestListURLs() {
+	t := suite.T()
+	repoConfig := models.RepositoryConfiguration{}
+	orgID := seeds.RandomOrgId()
+	var total int64
+	var err error
+
+	err = seeds.SeedRepositoryConfigurations(suite.tx, 1, seeds.SeedOptions{OrgID: orgID})
+	assert.Nil(t, err)
+
+	result := suite.tx.
+		Preload("Repository").
+		Where("org_id = ?", orgID).
+		Find(&repoConfig).
+		Count(&total)
+	assert.Nil(t, result.Error)
+	assert.Equal(t, int64(1), total)
+
+	response, err := GetRepositoryConfigDao(suite.tx).ListURLs(orgID)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), total)
+	assert.Equal(t, 1, len(response))
+	if len(response) > 0 {
+		assert.Equal(t, repoConfig.Repository.URL, response[0])
+	}
+
+	var otherOrgTotal int64
+	otherOrgID := orgID + "a"
+	otherOrgResponse, otherOrgErr := GetRepositoryConfigDao(suite.tx).ListURLs(otherOrgID)
+	otherOrgRepoConfigs := make([]models.RepositoryConfiguration, 0)
+	otherOrgResult := suite.tx.Where("org_id = ?", otherOrgID).Find(&otherOrgRepoConfigs).Count(&otherOrgTotal)
+
+	assert.Nil(t, otherOrgResult.Error)
+	assert.Nil(t, otherOrgErr)
+	assert.Empty(t, otherOrgResponse)
+	assert.Equal(t, int64(0), otherOrgTotal)
+}
+
+func (suite *RepositoryConfigSuite) TestListURLsNoRepositories() {
+	t := suite.T()
+	repoConfigs := make([]models.RepositoryConfiguration, 0)
+	orgID := seeds.RandomOrgId()
+	var total int64
+
+	result := suite.tx.Where("org_id = ?", orgID).Find(&repoConfigs).Count(&total)
+	assert.Nil(t, result.Error)
+	assert.Equal(t, int64(0), total)
+
+	response, err := GetRepositoryConfigDao(suite.tx).ListURLs(orgID)
+	assert.Nil(t, err)
+	assert.Empty(t, response)
+	assert.Equal(t, int64(0), total)
+}
+
 func (suite *RepositoryConfigSuite) TestDelete() {
 	t := suite.T()
 	tx := suite.tx

@@ -73,6 +73,32 @@ func (r *MockRepositoryConfigDao) List(
 	}
 }
 
+// ListURLs provides a mock function with given fields: OrgID
+func (_m *MockRepositoryConfigDao) ListURLs(OrgID string) ([]string, error) {
+	ret := _m.Called(OrgID)
+
+	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]string, error)); ok {
+		return rf(OrgID)
+	}
+	if rf, ok := ret.Get(0).(func(string) []string); ok {
+		r0 = rf(OrgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0, _ = ret.Get(0).([]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(OrgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 func (r *MockRepositoryConfigDao) SavePublicRepos(urls []string) error {
 	return nil
 }
